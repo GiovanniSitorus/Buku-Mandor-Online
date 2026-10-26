@@ -1,0 +1,1104 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Buku Mandor Digital - Sistem Informasi Perkebunan</title>
+  
+  <!-- SEO & Meta -->
+  <meta name="description" content="Aplikasi Buku Mandor Digital Perkebunan untuk pencatatan absensi, kegiatan panen, pemupukan, gulma, target realisasi, alat bahan, dan laporan harian mandor.">
+  <meta name="author" content="Mandor Digital System">
+  
+  <!-- Google Fonts & FontAwesome CDN -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Custom Stylesheet -->
+  <link rel="stylesheet" href="css/style.css">
+  
+  <!-- External Libraries (Chart.js & SheetJS) -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+
+  <div class="app-container">
+    
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar" id="appSidebar">
+      <div class="sidebar-header">
+        <div class="brand-icon">
+          <i class="fa-solid fa-tree"></i>
+        </div>
+        <div class="brand-text">
+          <h1>Buku Mandor</h1>
+          <p>Digital Perkebunan</p>
+        </div>
+      </div>
+
+      <nav class="nav-menu">
+        <a class="nav-item active" data-target="sec-dashboard" onclick="navigateTo('sec-dashboard')">
+          <i class="fa-solid fa-gauge-high"></i>
+          <span data-i18n="nav_dashboard">Dashboard</span>
+        </a>
+        <a class="nav-item" data-target="sec-pekerja" onclick="navigateTo('sec-pekerja')">
+          <i class="fa-solid fa-users"></i>
+          <span data-i18n="nav_pekerja">Data Pekerja</span>
+        </a>
+        <a class="nav-item" data-target="sec-absensi" onclick="navigateTo('sec-absensi')">
+          <i class="fa-solid fa-clipboard-user"></i>
+          <span data-i18n="nav_presensi">Presensi</span>
+        </a>
+        <a class="nav-item" data-target="sec-kegiatan" onclick="navigateTo('sec-kegiatan')">
+          <i class="fa-solid fa-book-open"></i>
+          <span data-i18n="nav_kegiatan">Kegiatan Harian</span>
+        </a>
+        <a class="nav-item" data-target="sec-target" onclick="navigateTo('sec-target')">
+          <i class="fa-solid fa-bullseye"></i>
+          <span data-i18n="nav_target">Target & Realisasi</span>
+        </a>
+        <a class="nav-item" data-target="sec-alat" onclick="navigateTo('sec-alat')">
+          <i class="fa-solid fa-boxes-packing"></i>
+          <span data-i18n="nav_alat">Alat & Bahan</span>
+        </a>
+        <a class="nav-item" data-target="sec-laporan" onclick="navigateTo('sec-laporan')">
+          <i class="fa-solid fa-file-invoice-dollar"></i>
+          <span data-i18n="nav_laporan">Laporan Harian</span>
+        </a>
+        <a class="nav-item" data-target="sec-pengaturan" onclick="navigateTo('sec-pengaturan')">
+          <i class="fa-solid fa-sliders"></i>
+          <span data-i18n="nav_pengaturan">Pengaturan & Audit</span>
+        </a>
+      </nav>
+
+      <div class="user-profile-bar">
+        <div class="user-info">
+          <div class="avatar" id="sidebarAvatar">MS</div>
+          <div class="user-details">
+            <h4 id="sidebarUserName">Supriatna</h4>
+            <span class="role-badge" id="sidebarUserRole">Mandor</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Layout -->
+    <div class="main-wrapper">
+      
+      <!-- Header Topbar -->
+      <header class="header-topbar">
+        <div class="header-left">
+          <button class="mobile-toggle" onclick="toggleMobileSidebar()" aria-label="Toggle Navigation Menu">
+            <i class="fa-solid fa-bars"></i>
+          </button>
+          <div class="header-title">
+            <h2 id="pageHeading">Dashboard Utama</h2>
+            <p id="pageSubheading">Overview kegiatan lapangan hari ini</p>
+          </div>
+        </div>
+
+        <div class="header-right">
+          <div class="lang-selector-wrap" title="Ganti Bahasa / Switch Language">
+            <i class="fa-solid fa-globe" style="color: var(--primary-light);"></i>
+            <select id="langSelector" onchange="switchLanguage(this.value)">
+              <option value="id">🇮🇩 ID (Indonesia)</option>
+              <option value="en">🇬🇧 EN (English)</option>
+            </select>
+          </div>
+
+          <div class="role-selector-wrap" title="Ganti Mode Akses Pengguna">
+            <i class="fa-solid fa-user-shield" style="color: var(--primary-light);"></i>
+            <select id="userRoleSelector" onchange="switchRole(this.value)">
+              <option value="mandor">Role: Mandor</option>
+              <option value="asisten">Role: Asisten</option>
+              <option value="admin">Role: Admin Kebun</option>
+            </select>
+          </div>
+
+          <button class="theme-toggle-btn" onclick="toggleTheme()" title="Toggle Dark/Light Mode" aria-label="Toggle Dark/Light Theme">
+            <i class="fa-solid fa-moon" id="themeIcon"></i>
+            <span id="themeLabel" style="font-size:0.75rem; font-weight:700; margin-left:4px;">DARK</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Viewport Content Sections -->
+      <main class="content-viewport">
+        
+        <!-- SECTION 1: DASHBOARD -->
+        <section id="sec-dashboard" class="page-section active">
+          <!-- Mandatory Header Card -->
+          <div class="card mb-4" style="background: linear-gradient(135deg, rgba(45, 106, 79, 0.35), rgba(18, 33, 28, 0.95)); border-color: var(--border-focus);">
+            <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px;">
+              <div>
+                <span class="badge badge-tercapai" style="margin-bottom: 8px;"><i class="fa-solid fa-calendar-day"></i> <span id="dashTodayDate">-</span></span>
+                <h2 style="font-size: 1.5rem; font-weight: 800; color: var(--text-main);" id="dashWelcomeUser">Mandor Supriatna</h2>
+                <p style="color: var(--text-muted); font-size: 0.9rem;" id="dashAfdelingInfo">Afdeling Alpha - Sawit | Regu 1, 2, 3 & 4</p>
+              </div>
+              <button class="btn btn-primary" onclick="openModal('modalInputKegiatan')">
+                <i class="fa-solid fa-plus-circle"></i> <span data-i18n="btn_new_activity">Catat Kegiatan Baru</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- 10 Mandatory Metrics Grid -->
+          <div class="grid-metrics">
+            <div class="metric-card hadir">
+              <div class="metric-icon"><i class="fa-solid fa-user-check"></i></div>
+              <div class="metric-info">
+                <h3 id="dashStatHadir">0</h3>
+                <p data-i18n="stat_hadir">Pekerja Hadir</p>
+              </div>
+            </div>
+            <div class="metric-card absen">
+              <div class="metric-icon"><i class="fa-solid fa-user-xmark"></i></div>
+              <div class="metric-info">
+                <h3 id="dashStatAbsen">0</h3>
+                <p data-i18n="stat_absen">Tidak Hadir (Izin/Sakit/Alpha)</p>
+              </div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-icon"><i class="fa-solid fa-users"></i></div>
+              <div class="metric-info">
+                <h3 id="dashStatTotalPekerja">0</h3>
+                <p data-i18n="stat_total_pekerja">Total Pekerja</p>
+              </div>
+            </div>
+            <div class="metric-card pekerjaan">
+              <div class="metric-icon"><i class="fa-solid fa-list-check"></i></div>
+              <div class="metric-info">
+                <h3 id="dashStatTotalPekerjaan">0</h3>
+                <p data-i18n="stat_total_pekerjaan">Total Pekerjaan Hari Ini</p>
+              </div>
+            </div>
+            <div class="metric-card hasil">
+              <div class="metric-icon"><i class="fa-solid fa-weight-hanging"></i></div>
+              <div class="metric-info">
+                <h3 id="dashStatTotalHasil">0</h3>
+                <p data-i18n="stat_total_hasil">Total Hasil TBS Terpanen</p>
+              </div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-icon"><i class="fa-solid fa-spinner"></i></div>
+              <div class="metric-info">
+                <h3 id="dashStatPending">0</h3>
+                <p data-i18n="stat_pending">Pekerjaan Belum Selesai</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Summary Table Activities Today -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">
+                <i class="fa-solid fa-clock-rotate-left" style="color: var(--primary-light);"></i> <span data-i18n="title_ringkasan_kegiatan">Ringkasan Kegiatan Hari Ini</span>
+              </div>
+              <button class="btn btn-secondary btn-sm" onclick="navigateTo('sec-kegiatan')"><span data-i18n="btn_view_all_kegiatan">Lihat Semua Kegiatan</span></button>
+            </div>
+
+            <div class="table-container">
+              <table class="custom-table">
+                <thead>
+                  <tr>
+                    <th>Waktu</th>
+                    <th>Jenis Pekerjaan</th>
+                    <th>Regu</th>
+                    <th>Lokasi / Blok</th>
+                    <th>Target</th>
+                    <th>Hasil Realisasi</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="dashTableKegiatan">
+                  <!-- Rendered dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+
+        <!-- SECTION 2: DATA PEKERJA -->
+        <section id="sec-pekerja" class="page-section">
+          <div class="filter-bar">
+            <div class="filter-inputs">
+              <input type="text" id="searchPekerja" class="form-control" placeholder="Cari nama, ID, atau NIK pekerja..." oninput="renderPekerjaTable()">
+              <select id="filterReguPekerja" class="form-control" onchange="renderPekerjaTable()">
+                <option value="">-- Semua Regu --</option>
+                <option value="Regu 1 - Panen">Regu 1 - Panen</option>
+                <option value="Regu 2 - Pemupukan">Regu 2 - Pemupukan</option>
+                <option value="Regu 3 - Gulma & Semprot">Regu 3 - Gulma & Semprot</option>
+                <option value="Regu 4 - Pengangkutan">Regu 4 - Pengangkutan</option>
+              </select>
+            </div>
+            <button class="btn btn-primary" onclick="openModal('modalInputPekerja')">
+              <i class="fa-solid fa-user-plus"></i> Tambah Pekerja
+            </button>
+          </div>
+
+          <div class="card">
+            <div class="table-container">
+              <table class="custom-table">
+                <thead>
+                  <tr>
+                    <th>ID Pekerja</th>
+                    <th>Nama Pekerja</th>
+                    <th>NIK / No. Pekerja</th>
+                    <th>Jabatan</th>
+                    <th>L/P</th>
+                    <th>Kelompok / Regu</th>
+                    <th>Afdeling</th>
+                    <th>Status</th>
+                    <th>Aksi</th>
+                  </tr>
+                </thead>
+                <tbody id="tablePekerjaBody">
+                  <!-- Dynamic rows -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+
+        <!-- SECTION 3: PRESENSI HARIAN -->
+        <section id="sec-absensi" class="page-section">
+          <div class="filter-bar">
+            <div class="filter-inputs">
+              <label style="font-weight:700; color:var(--text-muted); align-self:center;">Tanggal:</label>
+              <input type="date" id="absensiDate" class="form-control" style="width: auto;" onchange="loadAbsensiForDate()">
+            </div>
+            <div style="display:flex; gap:10px;">
+              <button class="btn btn-success" onclick="markAllPresent()">
+                <i class="fa-solid fa-check-double"></i> Hadir Semua (1-Klik)
+              </button>
+              <button class="btn btn-primary" onclick="saveAbsensiData()">
+                <i class="fa-solid fa-floppy-disk"></i> Simpan Presensi
+              </button>
+            </div>
+          </div>
+
+          <!-- Absensi Summary Cards -->
+          <div class="grid-metrics" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 20px;">
+            <div class="metric-card hadir">
+              <div class="metric-icon"><i class="fa-solid fa-user-check"></i></div>
+              <div class="metric-info"><h3 id="rekapHadirCount">0</h3><p>Hadir</p></div>
+            </div>
+            <div class="metric-card pekerjaan">
+              <div class="metric-icon"><i class="fa-solid fa-user-clock"></i></div>
+              <div class="metric-info"><h3 id="rekapIzinCount">0</h3><p>Izin</p></div>
+            </div>
+            <div class="metric-card hasil">
+              <div class="metric-icon"><i class="fa-solid fa-user-nurse"></i></div>
+              <div class="metric-info"><h3 id="rekapSakitCount">0</h3><p>Sakit</p></div>
+            </div>
+            <div class="metric-card absen">
+              <div class="metric-icon"><i class="fa-solid fa-user-minus"></i></div>
+              <div class="metric-info"><h3 id="rekapAlphaCount">0</h3><p>Alpha</p></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="table-container">
+              <table class="custom-table">
+                <thead>
+                  <tr>
+                    <th>ID Pekerja</th>
+                    <th>Nama Pekerja</th>
+                    <th>Regu</th>
+                    <th>Status Kehadiran</th>
+                    <th>Jam Masuk</th>
+                    <th>Jam Selesai</th>
+                    <th>Keterangan</th>
+                  </tr>
+                </thead>
+                <tbody id="tableAbsensiBody">
+                  <!-- Dynamic attendance list -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+
+        <!-- SECTION 4: KEGIATAN HARIAN -->
+        <section id="sec-kegiatan" class="page-section">
+          <div class="filter-bar">
+            <div class="filter-inputs">
+              <input type="date" id="filterKegiatanDate" class="form-control" style="width:auto;" onchange="renderKegiatanTable()">
+              <select id="filterKegiatanType" class="form-control" onchange="renderKegiatanTable()">
+                <option value="">-- Semua Jenis Pekerjaan --</option>
+                <option value="Panen">Panen Sawit</option>
+                <option value="Pemupukan">Pemupukan</option>
+                <option value="Pengendalian gulma">Pengendalian Gulma</option>
+                <option value="Penyemprotan">Penyemprotan</option>
+                <option value="Perawatan jalan">Perawatan Jalan</option>
+                <option value="Perawatan tanaman">Perawatan Tanaman</option>
+                <option value="Pemangkasan">Pemangkasan Frond</option>
+                <option value="Pengangkutan">Pengangkutan TBS</option>
+                <option value="Pembersihan lahan">Pembersihan Lahan</option>
+                <option value="Lainnya">Pekerjaan Lainnya</option>
+              </select>
+            </div>
+            <button class="btn btn-primary" onclick="openModal('modalInputKegiatan')">
+              <i class="fa-solid fa-plus"></i> Input Kegiatan Lapangan
+            </button>
+          </div>
+
+          <div class="card">
+            <div class="table-container">
+              <table class="custom-table">
+                <thead>
+                  <tr>
+                    <th>Tanggal / Jam</th>
+                    <th>Jenis Pekerjaan</th>
+                    <th>Regu / Pekerja</th>
+                    <th>Blok / Lokasi</th>
+                    <th>Target / Realisasi</th>
+                    <th>Detail Khusus (Panen/Pupuk/Gulma)</th>
+                    <th>Alat & Bahan</th>
+                    <th>Foto</th>
+                    <th>Status</th>
+                    <th>Aksi</th>
+                  </tr>
+                </thead>
+                <tbody id="tableKegiatanBody">
+                  <!-- Dynamic activities -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+
+        <!-- SECTION 5: TARGET DAN REALISASI -->
+        <section id="sec-target" class="page-section">
+          <div class="filter-bar">
+            <div class="filter-inputs">
+              <h3 style="font-size:1.1rem; font-weight:700;">Monitoring Pencapaian Target vs Realisasi Mandor</h3>
+            </div>
+            <button class="btn btn-primary" onclick="openModal('modalInputTarget')">
+              <i class="fa-solid fa-bullseye"></i> Tambah Target Pekerjaan
+            </button>
+          </div>
+
+          <div class="card">
+            <div class="table-container">
+              <table class="custom-table">
+                <thead>
+                  <tr>
+                    <th>Tanggal</th>
+                    <th>Jenis Pekerjaan</th>
+                    <th>Blok / Areal</th>
+                    <th>Target</th>
+                    <th>Realisasi</th>
+                    <th>Satuan</th>
+                    <th>Pencapaian (%)</th>
+                    <th>Indikator Visual</th>
+                    <th>Aksi</th>
+                  </tr>
+                </thead>
+                <tbody id="tableTargetBody">
+                  <!-- Dynamic targets -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+
+        <!-- SECTION 6: ALAT DAN BAHAN -->
+        <section id="sec-alat" class="page-section">
+          <div class="filter-bar">
+            <div class="filter-inputs">
+              <button class="btn btn-secondary active" id="btnTabAlat" onclick="switchAlatBahanTab('alat')">
+                <i class="fa-solid fa-wrench"></i> Data Alat Kerja
+              </button>
+              <button class="btn btn-secondary" id="btnTabBahan" onclick="switchAlatBahanTab('bahan')">
+                <i class="fa-solid fa-flask"></i> Data Bahan & Pupuk/Herbisida
+              </button>
+            </div>
+            <button class="btn btn-primary" id="btnTambahAlatBahan" onclick="openModalAlatBahan()">
+              <i class="fa-solid fa-plus"></i> Tambah Inventaris
+            </button>
+          </div>
+
+          <!-- Tab 1: Data Alat -->
+          <div id="containerDataAlat" class="card">
+            <div class="table-container">
+              <table class="custom-table">
+                <thead>
+                  <tr>
+                    <th>ID Alat</th>
+                    <th>Nama Alat</th>
+                    <th>Jenis Alat</th>
+                    <th>Jumlah Stok</th>
+                    <th>Satuan</th>
+                    <th>Kondisi</th>
+                    <th>Penggunaan</th>
+                    <th>Tgl Penggunaan</th>
+                    <th>Aksi</th>
+                  </tr>
+                </thead>
+                <tbody id="tableAlatBody">
+                  <!-- Dynamic tools -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Tab 2: Data Bahan -->
+          <div id="containerDataBahan" class="card" style="display:none;">
+            <div class="table-container">
+              <table class="custom-table">
+                <thead>
+                  <tr>
+                    <th>ID Bahan</th>
+                    <th>Nama Bahan / Pupuk</th>
+                    <th>Kategori / Jenis</th>
+                    <th>Jumlah Stok</th>
+                    <th>Satuan</th>
+                    <th>Kondisi Karung/Jerigen</th>
+                    <th>Dipergunakan Untuk</th>
+                    <th>Tgl Penggunaan</th>
+                    <th>Aksi</th>
+                  </tr>
+                </thead>
+                <tbody id="tableBahanBody">
+                  <!-- Dynamic materials -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+
+        <!-- SECTION 7: LAPORAN HARIAN & REKAP -->
+        <section id="sec-laporan" class="page-section">
+          <div class="filter-bar">
+            <div class="filter-inputs">
+              <label style="font-weight:700; color:var(--text-muted); align-self:center;">Pilih Tanggal Laporan:</label>
+              <input type="date" id="laporanDate" class="form-control" style="width:auto;" onchange="generateReportView()">
+            </div>
+            <div style="display:flex; gap:10px;">
+              <button class="btn btn-secondary" onclick="exportToExcel()">
+                <i class="fa-solid fa-file-excel" style="color:#2E7D32;"></i> Export Excel
+              </button>
+              <button class="btn btn-primary" onclick="printLaporan()">
+                <i class="fa-solid fa-print"></i> Cetak / Download PDF
+              </button>
+            </div>
+          </div>
+
+          <!-- Official Printable Mandor Field Report Sheet -->
+          <div class="card" id="printableReportArea" style="background:#FFF; color:#12211C; border-color:#DDD; padding: 28px;">
+            
+            <div style="border-bottom: 2px solid #2D6A4F; padding-bottom: 14px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <h2 style="font-size: 1.4rem; font-weight: 800; color: #1B5E20;">LAPORAN HARIAN MANDOR PERKEBUNAN</h2>
+                <p style="font-size: 0.85rem; color: #444;" id="repSubtitle">Afdeling Alpha - Buku Catatan Digital Mandor Lapangan</p>
+              </div>
+              <div style="text-align: right;">
+                <p style="font-size: 0.85rem; font-weight: 700;">Tanggal: <span id="repDateVal">-</span></p>
+                <p style="font-size: 0.85rem; font-weight: 600;" id="repMandorVal">Mandor: Supriatna</p>
+              </div>
+            </div>
+
+            <!-- Ringkasan Rekap Presensi Laporan -->
+            <div style="margin-bottom: 20px;">
+              <h4 style="font-weight: 700; color: #1B5E20; margin-bottom: 8px;">I. REKAP PRESENSI & KEHADIRAN TENAGA KERJA</h4>
+              <table class="custom-table" style="background: #FFF; border: 1px solid #CCC;">
+                <thead>
+                  <tr style="background: #E8F5E9; color: #1B5E20;">
+                    <th style="color:#1B5E20;">Total Pekerja</th>
+                    <th style="color:#1B5E20;">Hadir</th>
+                    <th style="color:#1B5E20;">Izin</th>
+                    <th style="color:#1B5E20;">Sakit</th>
+                    <th style="color:#1B5E20;">Alpha</th>
+                    <th style="color:#1B5E20;">% Kehadiran</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr id="repAttendanceRow">
+                    <!-- Dynamic -->
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Detail Hasil Kegiatan Laporan -->
+            <div style="margin-bottom: 20px;">
+              <h4 style="font-weight: 700; color: #1B5E20; margin-bottom: 8px;">II. DAFTAR PEKERJAAN & REALISASI HASIL LAPANGAN</h4>
+              <table class="custom-table" style="background: #FFF; border: 1px solid #CCC;">
+                <thead>
+                  <tr style="background: #E8F5E9; color: #1B5E20;">
+                    <th style="color:#1B5E20;">No</th>
+                    <th style="color:#1B5E20;">Jenis Pekerjaan</th>
+                    <th style="color:#1B5E20;">Blok / Lokasi</th>
+                    <th style="color:#1B5E20;">Jml Pekerja</th>
+                    <th style="color:#1B5E20;">Target</th>
+                    <th style="color:#1B5E20;">Realisasi Hasil</th>
+                    <th style="color:#1B5E20;">Alat / Bahan Digunakan</th>
+                    <th style="color:#1B5E20;">Keterangan</th>
+                  </tr>
+                </thead>
+                <tbody id="repKegiatanTableBody">
+                  <!-- Dynamic -->
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Tanda Tangan Mandor & Asisten -->
+            <div style="margin-top: 40px; display: flex; justify-content: space-between; text-align: center;">
+              <div style="width: 200px;">
+                <p style="font-size: 0.85rem; font-weight:600;">Dibuat Oleh,</p>
+                <div style="height: 60px;"></div>
+                <p style="font-weight: 700; border-top: 1px solid #333; padding-top: 4px;" id="repSigMandor">Supriatna (Mandor)</p>
+              </div>
+              <div style="width: 200px;">
+                <p style="font-size: 0.85rem; font-weight:600;">Disetujui Oleh,</p>
+                <div style="height: 60px;"></div>
+                <p style="font-weight: 700; border-top: 1px solid #333; padding-top: 4px;">Ir. Hendra (Asisten Afdeling)</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Charts Visualization Section (Rekap Mingguan / Bulanan) -->
+          <div class="charts-grid" style="margin-top: 30px;">
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title"><i class="fa-solid fa-chart-line" style="color:var(--primary-light);"></i> Rekap Presensi / Kehadiran Mingguan</div>
+              </div>
+              <canvas id="chartKehadiran" height="220"></canvas>
+            </div>
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title"><i class="fa-solid fa-chart-column" style="color:var(--accent-gold);"></i> Produktivitas TBS vs Target</div>
+              </div>
+              <canvas id="chartProduktivitas" height="220"></canvas>
+            </div>
+          </div>
+        </section>
+
+
+        <!-- SECTION 8: PENGATURAN & AUDIT LOG -->
+        <section id="sec-pengaturan" class="page-section">
+          <div class="form-row" style="margin-bottom: 24px;">
+            <div class="card">
+              <div class="card-title mb-3"><i class="fa-solid fa-sliders"></i> Informasi Afdeling Mandor</div>
+              <div class="form-group">
+                <label>Nama Mandor</label>
+                <input type="text" id="settingMandorName" class="form-control" value="Supriatna (Mandor Utama)" onchange="updateUserSettings()">
+              </div>
+              <div class="form-group">
+                <label>Divisi / Afdeling</label>
+                <input type="text" id="settingAfdeling" class="form-control" value="Afdeling Alpha - Sawit" onchange="updateUserSettings()">
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-title mb-3"><i class="fa-solid fa-database"></i> Reset Data Aplikasi</div>
+              <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom: 16px;">
+                Reset data akan mengembalikan seluruh data pekerja, absensi, dan kegiatan ke data awal (Seed Sample).
+              </p>
+              <button class="btn btn-danger" onclick="resetDatabaseToSeed()">
+                <i class="fa-solid fa-rotate-left"></i> Reset Ke Seed Data Awal
+              </button>
+            </div>
+          </div>
+
+          <!-- Audit Log Table -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">
+                <i class="fa-solid fa-shield-halved" style="color:var(--primary-light);"></i> Riwayat Perubahan System (Audit Logs)
+              </div>
+            </div>
+
+            <div class="table-container">
+              <table class="custom-table">
+                <thead>
+                  <tr>
+                    <th>Waktu / Timestamp</th>
+                    <th>Pengguna</th>
+                    <th>Role</th>
+                    <th>Aksi / Kegiatan</th>
+                    <th>Detail Perubahan</th>
+                  </tr>
+                </thead>
+                <tbody id="tableAuditLogsBody">
+                  <!-- Dynamic logs -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+
+  <!-- MODAL 1: INPUT / EDIT PEKERJA -->
+  <div class="modal-overlay" id="modalInputPekerja">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="modalPekerjaTitle">Tambah Data Pekerja</h3>
+        <button class="modal-close" onclick="closeModal('modalInputPekerja')">&times;</button>
+      </div>
+      <form id="formPekerja" onsubmit="handleSavePekerja(event)">
+        <input type="hidden" id="pekerjaDbId">
+        <div class="modal-body">
+          <div class="form-row">
+            <div class="form-group">
+              <label>ID Pekerja (Auto)</label>
+              <input type="text" id="pekerjaIdCode" class="form-control" placeholder="e.g. PKR-011" required>
+            </div>
+            <div class="form-group">
+              <label>NIK / No. KTP Pekerja</label>
+              <input type="number" id="pekerjaNik" class="form-control" placeholder="16 digit NIK" required>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Nama Lengkap Pekerja</label>
+              <input type="text" id="pekerjaNama" class="form-control" placeholder="Nama Pekerja" required>
+            </div>
+            <div class="form-group">
+              <label>Jabatan Lapangan</label>
+              <select id="pekerjaJabatan" class="form-control" required>
+                <option value="Pemanen Utama">Pemanen Utama</option>
+                <option value="Pekerja Pemupukan">Pekerja Pemupukan</option>
+                <option value="Operator Sprayer">Operator Sprayer</option>
+                <option value="Pekerja Pemangkasan">Pekerja Pemangkasan</option>
+                <option value="Pengangkut TBS (Loading)">Pengangkut TBS (Loading)</option>
+                <option value="Perawat Jalan & Parit">Perawat Jalan & Parit</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Jenis Kelamin</label>
+              <select id="pekerjaGender" class="form-control">
+                <option value="Laki-laki">Laki-laki</option>
+                <option value="Perempuan">Perempuan</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Kelompok / Regu</label>
+              <select id="pekerjaRegu" class="form-control">
+                <option value="Regu 1 - Panen">Regu 1 - Panen</option>
+                <option value="Regu 2 - Pemupukan">Regu 2 - Pemupukan</option>
+                <option value="Regu 3 - Gulma & Semprot">Regu 3 - Gulma & Semprot</option>
+                <option value="Regu 4 - Pengangkutan">Regu 4 - Pengangkutan</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Afdeling / Divisi</label>
+              <input type="text" id="pekerjaAfdeling" class="form-control" value="Afdeling Alpha" required>
+            </div>
+            <div class="form-group">
+              <label>Status Pekerja</label>
+              <select id="pekerjaStatus" class="form-control">
+                <option value="aktif">Aktif</option>
+                <option value="tidak aktif">Tidak Aktif</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('modalInputPekerja')">Batal</button>
+          <button type="submit" class="btn btn-primary"><i class="fa-solid fa-save"></i> Simpan Data Pekerja</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+
+  <!-- MODAL 2: INPUT KEGIATAN HARIAN & SPESIFIKASI DYNAMIC -->
+  <div class="modal-overlay" id="modalInputKegiatan">
+    <div class="modal-content" style="max-width: 800px;">
+      <div class="modal-header">
+        <h3>Input Kegiatan Lapangan Harian</h3>
+        <button class="modal-close" onclick="closeModal('modalInputKegiatan')">&times;</button>
+      </div>
+      <form id="formKegiatan" onsubmit="handleSaveKegiatan(event)">
+        <div class="modal-body">
+          <!-- General Fields -->
+          <div class="form-row">
+            <div class="form-group">
+              <label>Tanggal Pekerjaan</label>
+              <input type="date" id="kegiatanDate" class="form-control" required>
+            </div>
+            <div class="form-group">
+              <label>Regu / Kelompok Kerja Utama</label>
+              <select id="kegiatanRegu" class="form-control" required onchange="filterModalWorkersByRegu()">
+                <option value="Regu 1 - Panen">Regu 1 - Panen</option>
+                <option value="Regu 2 - Pemupukan">Regu 2 - Pemupukan</option>
+                <option value="Regu 3 - Gulma & Semprot">Regu 3 - Gulma & Semprot</option>
+                <option value="Regu 4 - Pengangkutan">Regu 4 - Pengangkutan</option>
+                <option value="Gabungan / Lintas Regu">Gabungan / Lintas Regu</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:8px;">
+              <label style="margin-bottom:0; font-weight:700; color:var(--text-main);">
+                <i class="fa-solid fa-users"></i> Pilih Pekerja Bertugas (<span id="modalWorkerCountBadge" style="color:var(--accent-gold); font-weight:800;">0 dipilih</span>):
+              </label>
+              <div style="display:flex; gap:8px;">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="selectAllModalWorkers(true)"><i class="fa-solid fa-check-square"></i> Pilih Semua</button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="selectAllModalWorkers(false)"><i class="fa-solid fa-square"></i> Kosongkan</button>
+              </div>
+            </div>
+
+            <div class="form-row" style="margin-bottom:8px;">
+              <div class="form-group" style="margin-bottom:0;">
+                <select id="modalFilterRegu" class="form-control" style="height:38px; padding:4px 8px; font-size:0.85rem;" onchange="populatePekerjaCheckboxes()">
+                  <option value="all">-- Total Semua Anggota Pekerja --</option>
+                  <option value="Regu 1 - Panen">Hanya Regu 1 - Panen</option>
+                  <option value="Regu 2 - Pemupukan">Hanya Regu 2 - Pemupukan</option>
+                  <option value="Regu 3 - Gulma & Semprot">Hanya Regu 3 - Gulma & Semprot</option>
+                  <option value="Regu 4 - Pengangkutan">Hanya Regu 4 - Pengangkutan</option>
+                </select>
+              </div>
+              <div class="form-group" style="margin-bottom:0;">
+                <input type="text" id="modalSearchWorker" class="form-control" placeholder="Cari nama / ID pekerja..." style="height:38px; font-size:0.85rem;" oninput="populatePekerjaCheckboxes()">
+              </div>
+            </div>
+
+            <div id="containerPekerjaCheckboxes" style="max-height: 160px; overflow-y: auto; background: var(--bg-main); border:1px solid var(--border-color); padding: 10px; border-radius: var(--radius-sm); display:grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px;">
+              <!-- Dynamic Checkboxes -->
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Jenis Pekerjaan</label>
+              <select id="kegiatanType" class="form-control" required onchange="toggleSubtypeForms(this.value)">
+                <option value="Panen">Panen Sawit</option>
+                <option value="Pemupukan">Pemupukan</option>
+                <option value="Pengendalian gulma">Pengendalian Gulma</option>
+                <option value="Penyemprotan">Penyemprotan</option>
+                <option value="Perawatan jalan">Perawatan Jalan</option>
+                <option value="Perawatan tanaman">Perawatan Tanaman</option>
+                <option value="Pemangkasan">Pemangkasan Frond</option>
+                <option value="Pengangkutan">Pengangkutan TBS</option>
+                <option value="Pembersihan lahan">Pembersihan Lahan</option>
+                <option value="Lainnya">Pekerjaan Lainnya</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Lokasi / Blok Perkebunan</label>
+              <input type="text" id="kegiatanBlok" class="form-control" placeholder="e.g. Blok A12" required>
+            </div>
+          </div>
+
+          <!-- DYNAMIC SUBFORM: PANEN -->
+          <div id="subformPanen" style="background: rgba(45, 106, 79, 0.1); border: 1px solid var(--primary-light); padding: 16px; border-radius: var(--radius-md); margin-bottom: 16px;">
+            <h4 style="color: var(--primary-light); margin-bottom: 12px;"><i class="fa-solid fa-wheat-awn"></i> Form Khusus Kegiatan Panen</h4>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Luas Blok (Ha)</label>
+                <input type="number" step="0.1" min="0" id="panenLuasBlok" class="form-control" placeholder="Ha" value="12">
+              </div>
+              <div class="form-group">
+                <label>Jumlah Pokok Dipanen</label>
+                <input type="number" min="0" id="panenJumlahPokok" class="form-control" placeholder="Pokok" value="380">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Jumlah Janjang TBS</label>
+                <input type="number" min="0" id="panenJanjang" class="form-control" placeholder="Janjang" oninput="calculatePanenTotalWeight()">
+              </div>
+              <div class="form-group">
+                <label>BJR (Berat Janjang Rata-rata in Kg)</label>
+                <input type="number" step="0.1" min="0" id="panenBjr" class="form-control" placeholder="Kg" value="18.0" oninput="calculatePanenTotalWeight()">
+              </div>
+            </div>
+            <div class="calc-highlight-box">
+              <span class="title">Total Berat TBS Terpanen (Kalkulasi Otomatis):</span>
+              <span class="val" id="panenCalcTotalWeight">0 Kg</span>
+            </div>
+            <div class="form-row" style="margin-top: 12px;">
+              <div class="form-group">
+                <label>Jumlah TPH</label>
+                <input type="number" min="0" id="panenTph" class="form-control" placeholder="Titik TPH" value="12">
+              </div>
+              <div class="form-group">
+                <label>Jumlah Ancak</label>
+                <input type="number" min="0" id="panenAncak" class="form-control" placeholder="Baris Ancak" value="16">
+              </div>
+            </div>
+          </div>
+
+          <!-- DYNAMIC SUBFORM: PEMUPUKAN -->
+          <div id="subformPemupukan" style="display:none; background: rgba(233, 196, 106, 0.1); border: 1px solid var(--accent-gold); padding: 16px; border-radius: var(--radius-md); margin-bottom: 16px;">
+            <h4 style="color: var(--accent-gold); margin-bottom: 12px;"><i class="fa-solid fa-flask"></i> Form Khusus Pemupukan</h4>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Jenis Pupuk</label>
+                <select id="pupukJenis" class="form-control">
+                  <option value="Pupuk NPK 15-15-15">Pupuk NPK 15-15-15 (Mahkota)</option>
+                  <option value="Pupuk Urea Granul">Pupuk Urea Granul</option>
+                  <option value="Pupuk MOP / KCL">Pupuk MOP / KCL</option>
+                  <option value="Pupuk Rock Phosphate (RP)">Pupuk Rock Phosphate (RP)</option>
+                  <option value="Pupuk Borate">Pupuk Borate</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Dosis Pupuk (Kg / Pokok)</label>
+                <input type="number" step="0.1" min="0" id="pupukDosis" class="form-control" value="2.0" oninput="calculatePupukTotal()">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Jumlah Pokok Terpupuk</label>
+                <input type="number" min="0" id="pupukPokok" class="form-control" value="350" oninput="calculatePupukTotal()">
+              </div>
+              <div class="form-group">
+                <label>Luas Areal (Ha)</label>
+                <input type="number" step="0.1" min="0" id="pupukLuas" class="form-control" value="8">
+              </div>
+            </div>
+            <div class="calc-highlight-box">
+              <span class="title">Total Pupuk Digunakan (Kalkulasi Otomatis):</span>
+              <span class="val" id="pupukCalcTotal">0 Kg</span>
+            </div>
+          </div>
+
+          <!-- DYNAMIC SUBFORM: GULMA -->
+          <div id="subformGulma" style="display:none; background: rgba(244, 162, 97, 0.1); border: 1px solid var(--accent-orange); padding: 16px; border-radius: var(--radius-md); margin-bottom: 16px;">
+            <h4 style="color: var(--accent-orange); margin-bottom: 12px;"><i class="fa-solid fa-spray-can"></i> Form Pengendalian Gulma</h4>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Metode Pengendalian</label>
+                <select id="gulmaMetode" class="form-control">
+                  <option value="Semprot Chemis (Knapsack)">Semprot Chemis (Knapsack)</option>
+                  <option value="Babat Manual (Washing)">Babat Manual (Washing)</option>
+                  <option value="Dongkel Anak Kayu">Dongkel Anak Kayu</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Jenis Gulma Dominan</label>
+                <input type="text" id="gulmaJenis" class="form-control" value="Gulma Berdaun Lebar & Pakisan">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Herbisida / Bahan Digunakan</label>
+                <input type="text" id="gulmaBahan" class="form-control" value="Gisat 480 SL">
+              </div>
+              <div class="form-group">
+                <label>Dosis (Liter / Ha)</label>
+                <input type="number" step="0.1" min="0" id="gulmaDosis" class="form-control" value="2.5">
+              </div>
+            </div>
+          </div>
+
+          <!-- Common Target & Time Fields -->
+          <div class="form-row">
+            <div class="form-group">
+              <label>Target Pekerjaan</label>
+              <input type="number" step="0.1" min="0" id="kegiatanTargetVal" class="form-control" required placeholder="Target angka">
+            </div>
+            <div class="form-group">
+              <label>Satuan Target</label>
+              <input type="text" id="kegiatanUnit" class="form-control" placeholder="e.g. Kg TBS, Ha, Ton" required>
+            </div>
+            <div class="form-group">
+              <label>Realisasi Hasil Saat Ini</label>
+              <input type="number" step="0.1" min="0" id="kegiatanResultVal" class="form-control" required placeholder="Hasil angka">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Jam Mulai</label>
+              <input type="time" id="kegiatanStartTime" class="form-control" value="07:00">
+            </div>
+            <div class="form-group">
+              <label>Jam Selesai</label>
+              <input type="time" id="kegiatanEndTime" class="form-control" value="12:30">
+            </div>
+            <div class="form-group">
+              <label>Status Pekerjaan</label>
+              <select id="kegiatanStatus" class="form-control">
+                <option value="Berjalan">Berjalan</option>
+                <option value="Selesai">Selesai</option>
+                <option value="Belum mulai">Belum mulai</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Alat yang Digunakan</label>
+              <input type="text" id="kegiatanTools" class="form-control" placeholder="e.g. Egrek 9m, Dodos, Sorong">
+            </div>
+            <div class="form-group">
+              <label>Bahan yang Digunakan</label>
+              <input type="text" id="kegiatanMaterials" class="form-control" placeholder="e.g. Pupuk NPK, Herbisida Gisat">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Foto Dokumentasi Bukti Lapangan</label>
+            <input type="file" id="kegiatanPhotoInput" class="form-control" accept="image/*" onchange="previewPhotoInput(this)">
+            <div id="photoPreviewBox" style="margin-top: 10px; display:none;">
+              <img id="photoPreviewImg" src="" alt="Preview Foto Lapangan" style="max-height: 160px; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Keterangan Catatan Mandor</label>
+            <textarea id="kegiatanNotes" class="form-control" rows="2" placeholder="Catatan kondisi lapangan..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('modalInputKegiatan')">Batal</button>
+          <button type="submit" class="btn btn-primary"><i class="fa-solid fa-check"></i> Simpan Kegiatan Lapangan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+
+  <!-- MODAL 3: INPUT TARGET -->
+  <div class="modal-overlay" id="modalInputTarget">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Tambah / Edit Target Pekerjaan</h3>
+        <button class="modal-close" onclick="closeModal('modalInputTarget')">&times;</button>
+      </div>
+      <form id="formTarget" onsubmit="handleSaveTarget(event)">
+        <div class="modal-body">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Tanggal Target</label>
+              <input type="date" id="targetDate" class="form-control" required>
+            </div>
+            <div class="form-group">
+              <label>Jenis Pekerjaan</label>
+              <select id="targetType" class="form-control" required>
+                <option value="Panen">Panen Sawit</option>
+                <option value="Pemupukan">Pemupukan</option>
+                <option value="Pengendalian gulma">Pengendalian Gulma</option>
+                <option value="Pengangkutan TBS">Pengangkutan TBS</option>
+                <option value="Pemangkasan Frond">Pemangkasan Frond</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Lokasi / Blok</label>
+              <input type="text" id="targetBlock" class="form-control" placeholder="e.g. Blok A12" required>
+            </div>
+            <div class="form-group">
+              <label>Satuan Target</label>
+              <input type="text" id="targetUnit" class="form-control" placeholder="e.g. Kg TBS, Ha, Ton" required>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Nilai Target</label>
+              <input type="number" step="0.1" min="0" id="targetVal" class="form-control" required placeholder="e.g. 5000">
+            </div>
+            <div class="form-group">
+              <label>Nilai Realisasi Saat Ini</label>
+              <input type="number" step="0.1" min="0" id="realizationVal" class="form-control" required placeholder="e.g. 4500">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('modalInputTarget')">Batal</button>
+          <button type="submit" class="btn btn-primary"><i class="fa-solid fa-save"></i> Simpan Target</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+
+  <!-- MODAL 4: INPUT ALAT / BAHAN -->
+  <div class="modal-overlay" id="modalInputAlatBahan">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="modalAlatBahanTitle">Tambah Inventaris</h3>
+        <button class="modal-close" onclick="closeModal('modalInputAlatBahan')">&times;</button>
+      </div>
+      <form id="formAlatBahan" onsubmit="handleSaveAlatBahan(event)">
+        <input type="hidden" id="abCategory" value="alat">
+        <div class="modal-body">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Nama Barang / Alat / Bahan</label>
+              <input type="text" id="abNama" class="form-control" required placeholder="e.g. Egrek 9m / Pupuk NPK">
+            </div>
+            <div class="form-group">
+              <label>Jenis / Kategori</label>
+              <input type="text" id="abJenis" class="form-control" required placeholder="e.g. Alat Panen / Pupuk Anorganik">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Jumlah Stok</label>
+              <input type="number" min="0" id="abJumlah" class="form-control" required placeholder="Jumlah angka">
+            </div>
+            <div class="form-group">
+              <label>Satuan</label>
+              <input type="text" id="abSatuan" class="form-control" required placeholder="e.g. Pcs, Kg, Liter, Unit">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Kondisi</label>
+              <select id="abKondisi" class="form-control">
+                <option value="Baik">Baik (Siap Pakai)</option>
+                <option value="Sangat Baik">Sangat Baik</option>
+                <option value="Perlu Perbaikan">Perlu Perbaikan</option>
+                <option value="Rusak">Rusak</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Penggunaan</label>
+              <input type="text" id="abPenggunaan" class="form-control" placeholder="Peruntukan di lapangan">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('modalInputAlatBahan')">Batal</button>
+          <button type="submit" class="btn btn-primary"><i class="fa-solid fa-save"></i> Simpan Inventaris</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+
+  <!-- MODAL 5: PHOTO VIEWER LIGHTBOX -->
+  <div class="modal-overlay" id="modalPhotoViewer">
+    <div class="modal-content" style="max-width: 600px; text-align: center;">
+      <div class="modal-header">
+        <h3 id="photoModalTitle">Dokumentasi Foto Lapangan</h3>
+        <button class="modal-close" onclick="closeModal('modalPhotoViewer')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <img id="lightboxImg" src="" alt="Foto Bukti Lapangan" style="width: 100%; border-radius: var(--radius-md); border:1px solid var(--border-color); max-height: 420px; object-fit: contain;">
+        <p id="lightboxCaption" style="margin-top: 12px; font-weight: 600; color: var(--text-muted);"></p>
+        <p id="lightboxTimestamp" style="font-size: 0.78rem; color: var(--primary-light); font-family: var(--font-mono);"></p>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Toast Notification Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Application Logic Scripts -->
+  <script src="js/i18n.js"></script>
+  <script src="js/db.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
